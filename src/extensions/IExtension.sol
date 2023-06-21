@@ -7,4 +7,5 @@ interface IExtension {
 
     function receiveCallFromGuardian(address _caller, uint256 _actionId, bytes calldata _callArgs) external;
 
+    function setConfigForVault(address _guardianProxy, address _vaultProxy, bytes calldata _configData) external;
 }

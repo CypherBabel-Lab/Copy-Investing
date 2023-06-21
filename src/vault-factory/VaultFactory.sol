@@ -9,6 +9,8 @@ import  { GuardianProxy } from "../guardian/GuardianProxy.sol";
 import  { IVaultLogic } from "../vault/IVaultLogic.sol";
 import  { VaultLogic } from "../vault/VaultLogic.sol";
 import { IGlobalShared } from "../utils/IGlobalShared.sol";
+import { VaultProxy } from "../vault/VaultProxy.sol";
+import { IExtension } from "../extensions/IExtension.sol";
 
 /// @title A title that should describe the contract/interface
 /// @author The name of the author
@@ -76,7 +78,7 @@ contract VaultFactory {
 
     /// @notice Gets the current owner of the contract
     /// @return owner_ The contract owner address
-    function getOwner() public view override returns (address owner_) {
+    function getOwner() public view returns (address owner_) {
         return getCreator();
     }
 
@@ -99,17 +101,11 @@ contract VaultFactory {
     /// @param _vaultSymbol The symbol of the vault
     /// @param _denominationAsset The address of the denomination asset
     /// @param _sharesActionTimelock The timelock for shares actions
-    /// @param _feeManagerConfigData The encoded config data for the FeeManager
-    /// @param _policyManagerConfigData The encoded config data for the PolicyManager
-    /// @return guardianProxy_ The address of the GuardianProxy contract
-    /// @return vaultProxy_ The address of the VaultProxy contract
     function createNewVault(
         string calldata _vaultName,
         string calldata _vaultSymbol,
         address _denominationAsset,
-        uint256 _sharesActionTimelock,
-        bytes calldata _feeManagerConfigData,
-        bytes calldata _policyManagerConfigData
+        uint256 _sharesActionTimelock
     ) external onlyActivated returns (address guardianProxy_, address vaultProxy_) {
 
         address canonicalSender = msg.sender;
@@ -121,7 +117,7 @@ contract VaultFactory {
         IGuardianLogic guardianProxyContract = IGuardianLogic(guardianProxy_);
         guardianProxyContract.setVaultProxy(vaultProxy_);
 
-        __configureExtensions(guardianProxy_, vaultProxy_, _feeManagerConfigData, _policyManagerConfigData);
+        __configureExtensions(guardianProxy_, vaultProxy_);
 
         guardianProxyContract.activate();
 
@@ -153,8 +149,9 @@ contract VaultFactory {
         string calldata _vaultName,
         string calldata _vaultSymbol
     ) private returns (address vaultProxy_) {
-        vaultProxy_ =
-            IDispatcher(IGlobalShared(getGlobalShared()).getDispatcher()).deployVaultProxy(getVaultLib(), _vaultOwner, _guardianProxy, _vaultName);
+        bytes memory constructData =
+            abi.encodeWithSelector(IVaultLogic.initialize.selector, getGlobalShared(),_vaultOwner, _guardianProxy, _vaultName);
+        vaultProxy_ = address(new VaultProxy(getVaultLib(), constructData));
         if (bytes(_vaultSymbol).length != 0) {
             IVaultLogic(vaultProxy_).setSymbol(_vaultSymbol);
         }
@@ -165,88 +162,11 @@ contract VaultFactory {
     /// @dev Helper function to configure the Extensions for a given GuardianProxy
     function __configureExtensions(
         address _guardianProxy,
-        address _vaultProxy,
-        bytes memory _feeManagerConfigData,
-        bytes memory _policyManagerConfigData
+        address _vaultProxy
     ) private {
-        // Since fees can only be set in this step, if there are no fees, there is no need to set the validated VaultProxy
-        if (_feeManagerConfigData.length > 0) {
-            IExtension(IGlobalShared(getGlobalShared()).getFeeManager()).setConfigForVault(
-                _guardianProxy, _vaultProxy, _feeManagerConfigData
-            );
-        }
-
-        // For all other extensions, we call to cache the validated VaultProxy, for simplicity.
-        // In the future, we can consider caching conditionally.
-        IExtension(IGlobalShared(getGlobalShared()).getExternalPositionManager()).setConfigForVault(
-            _guardianProxy, _vaultProxy, ""
-        );
         IExtension(IGlobalShared(getGlobalShared()).getIntegrationManager()).setConfigForVault(
             _guardianProxy, _vaultProxy, ""
         );
-        IExtension(IGlobalShared(getGlobalShared()).getPolicyManager()).setConfigForVault(
-            _guardianProxy, _vaultProxy, _policyManagerConfigData
-        );
-    }
-
-    // VAULT CALLS
-
-    /// @notice De-registers allowed arbitrary contract calls that can be sent from the VaultProxy
-    /// @param _contracts The contracts of the calls to de-register
-    /// @param _selectors The selectors of the calls to de-register
-    /// @param _dataHashes The keccak call data hashes of the calls to de-register
-    /// @dev ANY_VAULT_CALL is a wildcard that allows any payload
-    function deregisterVaultCalls(
-        address[] calldata _contracts,
-        bytes4[] calldata _selectors,
-        bytes32[] memory _dataHashes
-    ) external onlyCreator {
-        require(_contracts.length > 0, "deregisterVaultCalls: Empty _contracts");
-        require(
-            _contracts.length == _selectors.length && _contracts.length == _dataHashes.length,
-            "deregisterVaultCalls: Uneven input arrays"
-        );
-
-        for (uint256 i; i < _contracts.length; i++) {
-            require(
-                isRegisteredVaultCall(_contracts[i], _selectors[i], _dataHashes[i]),
-                "deregisterVaultCalls: Call not registered"
-            );
-
-            _vaultCallToPayloadToIsAllowed[keccak256(abi.encodePacked(_contracts[i], _selectors[i]))][_dataHashes[i]] =
-                false;
-
-            emit VaultCallDeregistered(_contracts[i], _selectors[i], _dataHashes[i]);
-        }
-    }
-
-    /// @notice Registers allowed arbitrary contract calls that can be sent from the VaultProxy
-    /// @param _contracts The contracts of the calls to register
-    /// @param _selectors The selectors of the calls to register
-    /// @param _dataHashes The keccak call data hashes of the calls to register
-    /// @dev ANY_VAULT_CALL is a wildcard that allows any payload
-    function registerVaultCalls(
-        address[] calldata _contracts,
-        bytes4[] calldata _selectors,
-        bytes32[] memory _dataHashes
-    ) external onlyCreator {
-        require(_contracts.length > 0, "registerVaultCalls: Empty _contracts");
-        require(
-            _contracts.length == _selectors.length && _contracts.length == _dataHashes.length,
-            "registerVaultCalls: Uneven input arrays"
-        );
-
-        for (uint256 i; i < _contracts.length; i++) {
-            require(
-                !isRegisteredVaultCall(_contracts[i], _selectors[i], _dataHashes[i]),
-                "registerVaultCalls: Call already registered"
-            );
-
-            _vaultCallToPayloadToIsAllowed[keccak256(abi.encodePacked(_contracts[i], _selectors[i]))][_dataHashes[i]] =
-                true;
-
-            emit VaultCallRegistered(_contracts[i], _selectors[i], _dataHashes[i]);
-        }
     }
 
     /// public getters

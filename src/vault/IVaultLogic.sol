@@ -15,9 +15,9 @@ interface IVaultLogic {
         WithdrawAssetTo
     }
 
-    function getAccessor() external view returns (address accessor_);
-
     function getCreator() external view returns (address creator_);
+
+    function getAccessor() external view returns (address accessor_);
 
     function getOwner() external view returns (address owner_);
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT 
 pragma solidity 0.8.19;
 
-contract GuardianShared {
+contract GlobalShared {
     address private immutable _vaultFactory;
     address private immutable _integrationManager;
     address private immutable _valueInterpreter;

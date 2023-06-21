@@ -10,7 +10,7 @@ import { AddressArrayLib } from "../utils/AddressArrayLib.sol";
 import { IVaultLogic } from "./IVaultLogic.sol";
 import { IGlobalShared } from "../utils/IGlobalShared.sol";
 
-abstract contract VaultLogic is IVaultLogic, SharesTokenBase, Initializable {
+contract VaultLogic is IVaultLogic, SharesTokenBase, Initializable {
     event AccessorSet(address prevAccessor, address nextAccessor);
 
     event OwnerSet(address prevOwner, address nextOwner);
@@ -46,17 +46,23 @@ abstract contract VaultLogic is IVaultLogic, SharesTokenBase, Initializable {
         _;
     }
 
+     modifier onlyAccessor() {
+        require(msg.sender == _accessor, "Only the designated accessor can make this call");
+        _;
+    }
+
     modifier notShares(address _asset) {
         require(_asset != address(this), "Cannot act on shares");
         _;
     }
 
     /// @dev Initializes the VaultProxy with the initial VaultLogic implementation
-    function initialize(address globalShared_, address owner_, string calldata vaultName_) external initializer {
+    function initialize(address globalShared_, address owner_, address accessor_, string calldata vaultName_) external initializer {
         _globalShared = globalShared_;
         _sharesName = vaultName_;
         _creator = msg.sender;
         __setOwner(owner_);
+        __setAccessor(accessor_);
     }
 
     /// @dev If receives ETH, immediately wrap into WETH. 
@@ -84,31 +90,31 @@ abstract contract VaultLogic is IVaultLogic, SharesTokenBase, Initializable {
 
     /// @notice add a tracked asset
     /// @param _asset Address of the asset to track
-    function addTrackedAsset(address _asset) external override onlyOwner() {
+    function addTrackedAsset(address _asset) external override onlyAccessor() {
             __addTrackedAsset(_asset);
     }
 
     /// @notice burn shares
     /// @param _account Address of the account to burn shares from
     /// @param _amount Amount of shares to burn
-    function burnShares(address _account, uint256 _amount) external override onlyOwner {
+    function burnShares(address _account, uint256 _amount) external override onlyAccessor {
         __burn(_account, _amount);
     }
 
     /// @notice Mint shares
     /// @param _account Address of the account to mint shares to
     /// @param _amount Amount of shares to mint
-    function mintShares(address _account, uint256 _amount) external override onlyOwner {
+    function mintShares(address _account, uint256 _amount) external override onlyAccessor {
         __mint(_account, _amount);
     }
     
     /// @notice transfer shares
-    function transferShares(address _from, address _to, uint256 _amount) external override onlyOwner() {
+    function transferShares(address _from, address _to, uint256 _amount) external override onlyAccessor() {
         __transfer(_from, _to, _amount);
     }
 
     /// @notice withdraw an asset to a specified recipient
-    function withdrawAssetTo(address _asset, address _target, uint256 _amount) external override onlyOwner {
+    function withdrawAssetTo(address _asset, address _target, uint256 _amount) external override onlyAccessor {
         __withdrawAssetTo(_asset, _target, _amount);
     }
 
@@ -120,6 +126,7 @@ abstract contract VaultLogic is IVaultLogic, SharesTokenBase, Initializable {
     function receiveValidatedVaultAction(VaultAction _action, bytes calldata _actionData)
         external
         override
+        onlyAccessor
     {
         if (_action == VaultAction.AddTrackedAsset) {
             __executeVaultActionAddTrackedAsset(_actionData);
@@ -281,6 +288,12 @@ abstract contract VaultLogic is IVaultLogic, SharesTokenBase, Initializable {
     /// @return globalShared_ address of the global shared
     function getGlobalShared() public view returns (address globalShared_) {
         return _globalShared;
+    }
+
+    /// @notice get the assessors address
+    /// @return accessor_ the assessors address
+    function getAccessor() public override view returns (address accessor_) {
+        return _accessor;
     }
 
     /// @notice get the creator address

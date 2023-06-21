@@ -9,4 +9,6 @@ interface IValueEvaluator {
         returns (uint256);
         
     function isSupportedPrimitiveAsset(address) external view returns (bool);
+
+    function isSupportedAsset(address) external view returns (bool);
 }

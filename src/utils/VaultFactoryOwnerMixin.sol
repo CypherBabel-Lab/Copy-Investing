@@ -7,14 +7,14 @@ import "../vault-factory/IVaultFactory.sol";
 /// @notice Mixin contract for inheriting the Vault Factory Owner
 /// @dev This contract is inherited by other contracts to enable them to be owned by the Vault Factory
 abstract contract VaultFactoryOwnerMixin {
-    IVaultFactory internal immutable _vaultFactory;
+    address internal immutable _vaultFactoryAddress;
 
     constructor(address vaultFactory_) {
-        _vaultFactory = IVaultFactory(vaultFactory_);
+        _vaultFactoryAddress = vaultFactory_;
     }
 
     modifier onlyVaultFactoryOwner() {
-        require(msg.sender == _vaultFactory.getOwner(), "Only Vault Factory owner can call this function");
+        require(msg.sender == IVaultFactory(getVaultFactory()).getOwner(), "Only Vault Factory owner can call this function");
         _;
     }
 
@@ -23,6 +23,6 @@ abstract contract VaultFactoryOwnerMixin {
     /// @notice Gets the Vault Factory Address
     /// @return vaultFactory_ The Vault Factory A ddress
     function getVaultFactory() public view returns (address) {
-        return address(_vaultFactory);
+        return _vaultFactoryAddress;
     }
 }

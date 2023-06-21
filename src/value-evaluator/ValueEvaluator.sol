@@ -79,6 +79,13 @@ contract ValueEvaluator is
         revert("calcCanonicalAssetValue: Unsupported conversion");
     }
 
+    /// @notice Checks whether an asset is a supported asset
+    /// @param _asset The asset to check
+    /// @return isSupported_ True if the asset is a supported asset
+    function isSupportedAsset(address _asset) public view override returns (bool isSupported_) {
+        return isSupportedPrimitiveAsset(_asset);
+    }
+
     // PRIVATE FUNCTIONS
 
     /// @dev Helper to differentially calculate an asset value
