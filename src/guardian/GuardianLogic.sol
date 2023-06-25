@@ -162,7 +162,7 @@ contract GuardianLogic is IGuardianLogic, Initializable {
     /// @notice set the vault proxy
     /// @param vaultProxy_ The vault proxy
     function setVaultProxy(address vaultProxy_) external onlyVaultFactory {
-        require(_vaultProxy != address(0), "setVaultProxy: _vaultProxy cannot be empty");
+        require(vaultProxy_ != address(0), "setVaultProxy: _vaultProxy cannot be empty");
 
         _vaultProxy = vaultProxy_;
         emit VaultProxySet(_vaultProxy);
@@ -236,11 +236,10 @@ contract GuardianLogic is IGuardianLogic, Initializable {
         external
         returns (uint256 sharesReceived_)
     {
-        bool hasSharesActionTimelock = getSharesActionTimelock() > 0;
         address canonicalSender = msg.sender;
 
         return __buyShares(
-            canonicalSender, _investmentAmount, _minSharesQuantity, hasSharesActionTimelock, canonicalSender
+            canonicalSender, _investmentAmount, _minSharesQuantity, false, canonicalSender
         );
     }
 

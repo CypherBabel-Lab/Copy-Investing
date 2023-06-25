@@ -78,7 +78,7 @@ contract VaultFactory {
 
     /// @notice Gets the current owner of the contract
     /// @return owner_ The contract owner address
-    function getOwner() public view returns (address owner_) {
+    function getOwner() public view  returns (address owner_) {
         return getCreator();
     }
 
