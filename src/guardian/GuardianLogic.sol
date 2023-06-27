@@ -33,6 +33,10 @@ contract GuardianLogic is IGuardianLogic, Initializable {
         uint256[] receivedAssetAmounts
     );
 
+    event Followed(address follower);
+
+    event Unfollowed(address follower);
+
     // gloabalShared
     address internal _gloabalShared;
     // constants
@@ -52,6 +56,9 @@ contract GuardianLogic is IGuardianLogic, Initializable {
     // that must expire before that account transfers or redeems their shares
     uint256 internal _sharesActionTimelock;
     mapping(address => uint256) internal _acctToLastSharesBoughtTimestamp;
+
+    // followers
+    mapping(address => bool) internal _follower;
 
     // MODIFIERS
 
@@ -110,6 +117,20 @@ contract GuardianLogic is IGuardianLogic, Initializable {
                 || block.timestamp.sub(lastSharesBoughtTimestamp) >= getSharesActionTimelock(),
             "Shares action timelocked"
         );
+    }
+
+    /// @notice Follow a guardian
+    /// @param who The guardian to follow
+    function Follow(address who) external  {
+        _follower[who] = true;
+        emit Followed(who);
+    }
+
+    /// @notice Unfollow a guardian
+    /// @param who The guardian to unfollow
+    function Unfollow(address who) external  {
+        _follower[who] = false;
+        emit Unfollowed(who);
     }
 
     /// @notice Calls a specified action on an Extension
@@ -441,5 +462,12 @@ contract GuardianLogic is IGuardianLogic, Initializable {
     /// @return lastSharesBoughtTimestamp_ The last shares bought timestamp for the account
     function getLastSharesBoughtTimestampForAccount(address account_) public view returns (uint256 lastSharesBoughtTimestamp_) {
         return _acctToLastSharesBoughtTimestamp[account_];
+    }
+
+    /// @notice Get the follower
+    /// @param follower_ The follower
+    /// @return ifFollow_ The ifFollow
+    function getFollower(address follower_) public view returns (bool ifFollow_) {
+        return _follower[follower_];
     }
 }
