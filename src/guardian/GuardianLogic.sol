@@ -120,15 +120,17 @@ contract GuardianLogic is IGuardianLogic, Initializable {
     }
 
     /// @notice Follow a guardian
-    /// @param who The guardian to follow
-    function Follow(address who) external  {
+    function Follow() external  {
+        address who = msg.sender;
+        require( who != IVaultLogic(getVaultProxy()).getOwner(), "vault owner not allowed to follow");
         _follower[who] = true;
         emit Followed(who);
     }
 
     /// @notice Unfollow a guardian
-    /// @param who The guardian to unfollow
-    function Unfollow(address who) external  {
+    function Unfollow() external  {
+        address who = msg.sender;
+        require( who != IVaultLogic(getVaultProxy()).getOwner(), "vault owner not allowed to unfollow");
         _follower[who] = false;
         emit Unfollowed(who);
     }

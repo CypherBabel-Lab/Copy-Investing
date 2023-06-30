@@ -8,7 +8,7 @@ import { ChainlinkPriceFeedMixin } from "../src/price-feeds/primitives/Chainlink
 
 // address constant ARBITRUM_WETH = 0x1980A588fA420E874fC5fB1e0E68FBE39c34672f;
 address constant MUMBAI_WMATIC = 0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889;
-uint256 constant CHAINLINK_STALE_RATE_THRESHOLD = 30 minutes;
+uint256 constant CHAINLINK_STALE_RATE_THRESHOLD = 300 minutes;
 // address constant ARBITRUM_ETH_USD_AGGREGATOR = 0x62CAe0FA2da220f43a51F86Db2EDb36DcA9A5A08;
 address constant MUMBAI_ETH_USD_AGGREGATOR = 0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada;
 
@@ -42,23 +42,23 @@ contract Deploy is Script {
         // set value evaluator eth usd aggregator
         IValueEvaluator(vauleEvaluatorAddress).setEthUsdAggregator(MUMBAI_ETH_USD_AGGREGATOR);
         // set value evaluator primitives aggregator
-        address[] memory erc20AddressList = new address[](1);
-        // erc20AddressList[0] = 0xe6b8a5CF854791412c1f6EFC7CAf629f5Df1c747;
+        address[] memory erc20AddressList = new address[](4);
         erc20AddressList[0] = 0xE03489D4E90b22c59c5e23d45DFd59Fc0dB8a025;
-        // erc20AddressList[1] = 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253;
-        // erc20AddressList[2] = 0x326C977E6efc84E512bB9C30f76E30c160eD06FB;
+        erc20AddressList[1] = 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253;
+        erc20AddressList[2] = 0x326C977E6efc84E512bB9C30f76E30c160eD06FB;
+        erc20AddressList[3] = 0xe6b8a5CF854791412c1f6EFC7CAf629f5Df1c747;
         // address[] memory chainlinkAggregatorAddressList = [MUMBAI_USDC_USD_AGGREGATOR,MUMBAI_SAND_USD_AGGREGATOR,MUMBAI_DAI_USD_AGGREGATOR,MUMBAI_LINK_ETH_AGGREGATOR];
-        address[] memory chainlinkAggregatorAddressList = new address[](1);
-        // chainlinkAggregatorAddressList[0] = MUMBAI_USDC_USD_AGGREGATOR;
+        address[] memory chainlinkAggregatorAddressList = new address[](4);
         chainlinkAggregatorAddressList[0] = MUMBAI_SAND_USD_AGGREGATOR;
-        // chainlinkAggregatorAddressList[1] = MUMBAI_DAI_USD_AGGREGATOR;
-        // chainlinkAggregatorAddressList[2] = MUMBAI_LINK_ETH_AGGREGATOR;
+        chainlinkAggregatorAddressList[1] = MUMBAI_DAI_USD_AGGREGATOR;
+        chainlinkAggregatorAddressList[2] = MUMBAI_LINK_ETH_AGGREGATOR;
+        chainlinkAggregatorAddressList[3] = MUMBAI_USDC_USD_AGGREGATOR;
         // ChainlinkPriceFeedMixin.RateAsset[]  memory rateAssetList = [ChainlinkPriceFeedMixin.RateAsset.USD,ChainlinkPriceFeedMixin.RateAsset.USD,ChainlinkPriceFeedMixin.RateAsset.USD,ChainlinkPriceFeedMixin.RateAsset.ETH];
-        uint8[] memory rateAssetList = new uint8[](1);
-        // rateAssetList[0] = uint8(ChainlinkRateAsset.USD);
+        uint8[] memory rateAssetList = new uint8[](4);
         rateAssetList[0] = uint8(ChainlinkRateAsset.USD);
-        // rateAssetList[1] = uint8(ChainlinkRateAsset.USD);
-        // rateAssetList[2] = uint8(ChainlinkRateAsset.ETH);
+        rateAssetList[1] = uint8(ChainlinkRateAsset.USD);
+        rateAssetList[2] = uint8(ChainlinkRateAsset.ETH);
+        rateAssetList[3] = uint8(ChainlinkRateAsset.USD);
         IValueEvaluator(vauleEvaluatorAddress).addPrimitives(erc20AddressList,chainlinkAggregatorAddressList,rateAssetList);
         // deploy ox adapter
         address addressListRegistry = deployCode("AddressListRegistry.sol");
