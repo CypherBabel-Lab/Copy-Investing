@@ -203,7 +203,7 @@ contract GuardianLogic is IGuardianLogic, Initializable {
 
     /// @notice Calculates the aum of the vault
     /// @return aum_ The vault's aum
-    function calcAum() public override returns (uint256 aum_) {
+    function calcAum() public override view returns (uint256 aum_) {
         address vaultProxyCopy = getVaultProxy();
 
         address[] memory trackedAssets = IVaultLogic(vaultProxyCopy).getTrackedAssets();
@@ -225,7 +225,7 @@ contract GuardianLogic is IGuardianLogic, Initializable {
     /// @notice Calculates the gross value of 1 unit of shares in the vault's denomination asset
     /// @return nav_ The amount of the denomination asset per share
     /// @dev Does not account for any fees outstanding.
-    function calcNav() external override returns (uint256 nav_) {
+    function calcNav() external override view returns (uint256 nav_) {
         uint256 aum = calcAum();
 
         nav_ = __calcNav(

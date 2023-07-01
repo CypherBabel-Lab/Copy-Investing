@@ -6,6 +6,7 @@ interface IValueEvaluator {
 
     function calcCanonicalAssetsTotalValue(address[] calldata, uint256[] calldata, address)
         external
+        view
         returns (uint256);
         
     function isSupportedPrimitiveAsset(address) external view returns (bool);
